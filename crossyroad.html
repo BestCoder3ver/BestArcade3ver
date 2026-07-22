@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,72 +6,116 @@
 <title>Crossy Road</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; margin:0; padding:0; }
 body { background:#111; display:flex; align-items:center; justify-content:center; height:100vh; overflow:hidden; touch-action:none; }
 #wrap {
   position:relative;
   display:flex;
   flex-direction:column;
   align-items:center;
+  height:100%;
+  width:100%;
 }
 canvas {
   display:block;
   image-rendering:pixelated;
   image-rendering:crisp-edges;
-  margin-bottom:15px;
+  flex-shrink:0;
+  touch-action:none;
+  -webkit-touch-callout:none;
 }
 #dpad {
-  position:static;
-  margin-top:35px;
   display:none;
-  width:100vw;
+  flex:1 1 auto;
+  width:100%;
+  max-width:800px;
+  flex-direction:row;
   user-select:none;
   -webkit-user-select:none;
+  gap:0;
+  min-height:0;
 }
-.drow {
+
+/* Side panels: left & right arrows span full height */
+#dpad-left,
+#dpad-right {
+  flex:1;
   display:flex;
-  justify-content:center;
-  width:100%;
+  min-height:0;
+  overflow:hidden;
+}
+
+/* Center column: up arrow + divider + down arrow */
+#dpad-center {
+  flex:0 0 200px;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
 }
 
 .dbtn {
-  width:60px;
-  height:60px;
   background:rgba(0,0,0,0.45);
   border:2px solid rgba(255,255,255,0.35);
-  border-radius:10px;
   color:#fff;
-  font-size:24px;
-  line-height:60px;
+  font-size:36px;
   text-align:center;
-  margin:3px;
   cursor:pointer;
   touch-action:none;
   -webkit-tap-highlight-color:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-/* Make left and right stretch */
-#dbl,
+/* Up arrow fills top half of center */
+#dbu {
+  flex:1;
+  border-bottom:none;
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+}
+
+/* Down arrow fills bottom half of center */
+#dbd {
+  flex:1;
+  border-top:none;
+  border-top-left-radius:0;
+  border-top-right-radius:0;
+}
+
+/* Divider line between up and down arrows */
+#dpad-divider {
+  flex:0 0 2px;
+  background:rgba(255,255,255,0.5);
+  position:relative;
+  z-index:1;
+}
+
+/* Left arrow spans full height */
+#dbl {
+  flex:1;
+  border-right:none;
+  border-top-right-radius:0;
+  border-bottom-right-radius:0;
+}
+
+/* Right arrow spans full height */
 #dbr {
   flex:1;
-  max-width:none;
-}
-
-/* Move up/down row slightly higher */
-#dbu,
-#dbd {
-  position:relative;
-  top:15px;
-  height:80px;
-  line-height:80px;
+  border-left:none;
+  border-top-left-radius:0;
+  border-bottom-left-radius:0;
 }
 </style>
 </head>
 <body>
 <div id="wrap">
-<canvas id="gc" width="800" height="600"></canvas>
+<canvas id="gc" width="800" height="540"></canvas>
 <div id="dpad">
-  <div class="drow"><div class="dbtn" id="dbu">▲</div></div>
-  <div class="drow"><div class="dbtn" id="dbl">◀</div><div class="dbtn" id="dbd">▼</div><div class="dbtn" id="dbr">▶</div></div>
+    <div id="dpad-left"><div class="dbtn" id="dbl">◀</div></div>
+    <div id="dpad-center"><div class="dbtn" id="dbu">▲</div><div id="dpad-divider"></div><div class="dbtn" id="dbd">▼</div></div>
+    <div id="dpad-right"><div class="dbtn" id="dbr">▶</div></div>
 </div>
 </div>
 <script>
@@ -85,7 +129,7 @@ const canvas = document.getElementById('gc');
 const ctx = canvas.getContext('2d');
 const dpad = document.getElementById('dpad');
 
-const PASSWORD = "Jake Is The Best At Fortnite LOL";
+const PASSWORD = "Jake";
 const PLAY_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
 function checkPasswordLock() {
@@ -263,14 +307,14 @@ function startLockTimer(endTime) {
 }
 
 function fitCanvas() {
-  const s = Math.min(window.innerWidth / 800, window.innerHeight / 600, 1);
+  const s = Math.min(window.innerWidth / 800, window.innerHeight / 540, 1);
   canvas.style.width  = (800 * s) + 'px';
-  canvas.style.height = (600 * s) + 'px';
+  canvas.style.height = (540 * s) + 'px';
 }
 window.addEventListener('resize', fitCanvas);
 fitCanvas();
 
-const W = 800, H = 600;
+const W = 800, H = 540;
 const CELL = 64;
 const COLS = 13;
 const START_COL = 6;
@@ -539,9 +583,7 @@ function initGame() {
   genUpTo(55);
 }
 
-// ===== INPUT =====
 document.addEventListener('keydown',e=>{
-  if(keys[e.key]) return;
   keys[e.key]=true;
   initAc();
 
@@ -574,6 +616,7 @@ canvas.addEventListener('click',e=>{
   }
 
   if(gs==='gameOver'){
+
     if(showStatsResetPopup){
 
   ctx.fillStyle='rgba(0,0,0,0.8)';
@@ -631,12 +674,12 @@ canvas.addEventListener('click',e=>{
   return;
 }
 
-    if(inBtn(mx,my,455,75,150,35)){
-      showStatsResetPopup = true;
+    if(inBtn(mx,my,175,H-28,450,24)){
+      localStorage.removeItem("crossyUnlockTime");
+      showStatsResetPopup = false;
+      showPasswordScreen();
       return;
     }
-
-    // popup drawing removed for now
 
     if(inBtn(mx,my,180,360,200,48)){
       startGame();
@@ -650,7 +693,7 @@ canvas.addEventListener('click',e=>{
     }
 
     if(inBtn(mx,my,300,405,200,48)){
-      window.location.href = "../index.html";
+      window.location.href = "index.html";
       return;
     }
 
@@ -706,19 +749,12 @@ if(gs==='gameOver'){
   }
 
 
-  if(inBtn(mx,my,455,75,150,35)){
-    showStatsResetPopup = true;
+  if(inBtn(mx,my,175,H-28,450,24)){
+    localStorage.removeItem("crossyUnlockTime");
+    showStatsResetPopup = false;
+    showPasswordScreen();
     return;
   }
-  if(inBtn(mx,my,455,75,150,35)){
-  showStatsResetPopup = true;
-  return;
-}
-
-    if(inBtn(mx,my,455,75,150,35)){
-        localStorage.removeItem("crossyUnlockTime");
-        return;
-    }
 
     if(inBtn(mx,my,180,360,200,48)){
         startGame();
@@ -741,7 +777,6 @@ if(gs==='gameOver'){
 
 if(gs==='shop'){
     handleShopClick(mx,my);
-    draw();
     return;
 }
 }, {passive:false});
@@ -1264,8 +1299,11 @@ function drawTitle() {
 function drawBtn(label, x, y, w, h, col, textCol) {
   ctx.fillStyle=col; ctx.fillRect(x,y,w,h);
   ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h); ctx.lineWidth=1;
-  ctx.fillStyle=textCol||'#fff'; ctx.font='bold 18px monospace'; ctx.textAlign='center';
-  ctx.fillText(label, x+w/2, y+h/2+6); ctx.textAlign='left';
+  ctx.fillStyle=textCol||'#fff'; ctx.textAlign='center';
+  // Use bigger font for reset timer button
+  const fs = h >= 80 ? Math.min(28, h * 0.32) : 18;
+  ctx.font='bold ' + fs + 'px monospace';
+  ctx.fillText(label, x+w/2, y+h/2+fs*0.35); ctx.textAlign='left';
 }
 function inBtn(mx,my,x,y,w,h){return mx>=x&&mx<=x+w&&my>=y&&my<=y+h;}
 
@@ -1292,7 +1330,7 @@ ctx.strokeStyle='#cc2222'; ctx.lineWidth=3; ctx.strokeRect(160,120,480,390); ctx
   ctx.fillStyle='#ff4444'; ctx.font='bold 46px monospace'; ctx.textAlign='center';
 ctx.textAlign='left';
 
-drawBtn('RESET TIMER',455,75,150,35,'#553333','#ffffff');
+drawBtn('RESET TIMER',175,H-28,450,24,'#553333','#ffffff');
 
 ctx.fillText('GAME OVER',285,165);
   const msgs={car:'Squished by a car!',train:'Hit by a train!',water:'Fell in the river!',offscreen:'Left behind!'};
@@ -1458,7 +1496,7 @@ function update() {
 }
 // ===== DRAW =====
 function draw() {
-  dpad.style.display = gs==='playing' ? 'block' : 'none';
+  dpad.style.display = gs==='playing' ? 'flex' : 'none';
   ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
   ctx.clearRect(0,0,W,H);
   ctx.save(); ctx.translate(shake.x,shake.y);
